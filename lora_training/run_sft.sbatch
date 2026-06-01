@@ -36,7 +36,7 @@ version=r-${lora_rank}_ws-${warmup_steps}_lr-${learning_rate}_min-lr-${min_lr}
 
 # TODO: Add path to the root dir of the GaMS-PEFT-Tuning repository
 WORK_DIR=
-SCRIPT_DIR=$WORK_DIR/training
+SCRIPT_DIR=$WORK_DIR/lora_training
 
 # Model path and tokenizer paths can also be local paths
 MODEL_INPUT_PATH=cjvt/GaMS3-12B
