@@ -2,7 +2,7 @@
 #SBATCH --job-name=lora_sft
 #SBATCH --partition=gpu
 #SBATCH --time=2-00
-#SBATCH --nodes=2
+#SBATCH --nodes=4
 #SBATCH --tasks-per-node=1
 #SBATCH --gpus-per-node=4
 #SBATCH --cpus-per-task=32

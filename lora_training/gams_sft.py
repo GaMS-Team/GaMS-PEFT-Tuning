@@ -64,8 +64,8 @@ def run_training(experiment_dir, model_input_path, tokenizer_path, run_name, lor
 
     num_epochs = 3
     steps_per_epoch = len(train_dataset) // batch_size
-    eval_steps = int(1 / 3 * steps_per_epoch)  # Evaluate 3 times per epoch
-    save_steps = int(1 / 3 * steps_per_epoch)  # Save 3 times per epoch
+    eval_steps = int(1 / 4 * steps_per_epoch)  # Evaluate 3 times per epoch
+    save_steps = int(1 / 8 * steps_per_epoch)  # Save 3 times per epoch
 
     if process_rank == 0:
         print("--------------------------------")
@@ -87,7 +87,7 @@ def run_training(experiment_dir, model_input_path, tokenizer_path, run_name, lor
         per_device_eval_batch_size=micro_batch_size,
         gradient_accumulation_steps=gradient_accumulation_steps,
         dataloader_num_workers=8,
-        max_length=16384,
+        max_length=32768,
         completion_only_loss=True,
 
         eval_strategy="steps",
