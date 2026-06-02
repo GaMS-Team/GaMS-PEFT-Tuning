@@ -16,8 +16,10 @@ WORK_DIR=
 
 CONTAINER_DIR=$WORK_DIR/apptainer
 CONTAINER=$CONTAINER_DIR/slaif_peft.sif
+MODELS_DIR=$WORK_DIR/models
+mkdir -p $MODELS_DIR
 
-model_path=$1
+model_name=$1
 batch_size=$2
 
 N_SHARDS=$SLURM_ARRAY_TASK_COUNT
@@ -44,7 +46,7 @@ srun \
     --workdir /script \
     $CONTAINER \
     python3 vllm_batch_inference.py \
-        --model_path $model_path \
+        --model_path /models/$model_name \
         --input_file $INPUT_FILE \
         --output_file $OUTPUT_FILE \
         --batch_size $batch_size \
