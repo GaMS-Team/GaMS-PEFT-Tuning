@@ -38,7 +38,7 @@ version=r-${lora_rank}_ws-${warmup_steps}_lr-${learning_rate}_min-lr-${min_lr}
 WORK_DIR=
 SCRIPT_DIR=$WORK_DIR/lora_training
 
-# Model path and tokenizer paths can also be local paths
+# Model path and tokenizer paths can also be local paths (in that case you should mount them into the container)
 MODEL_INPUT_PATH=cjvt/GaMS3-12B
 TOKENIZER_PATH=cjvt/GaMS3-12B-Instruct
 
@@ -126,8 +126,8 @@ python3 -m torch.distributed.run \\
   --master_port 9901 \\
   /script/gams_sft.py  \\
     --experiment_dir=/output \\
-    --model_input_path=/model_input_path \\
-    --tokenizer_path=/tokenizer_path \\
+    --model_input_path=$MODEL_INPUT_PATH \\
+    --tokenizer_path=$TOKENIZER_PATH \\
     --run_name=${WANDB_RUN_NAME} \\
     --lora_rank=${lora_rank} \\
     --warmup_steps=${warmup_steps} \\
@@ -145,6 +145,6 @@ srun \
   --output="${EXPERIMENTS_DIR}/${RUN_NAME}.txt" \
   apptainer exec \
     --nv \
-    -B ${EXPERIMENTS_DIR}:/experiments,${DATA_DIR}:/data,${MODEL_INPUT_PATH}:/model_input_path,${TOKENIZER_PATH}:/tokenizer_path,${SCRIPT_DIR}:/script,${OUTPUT_DIR}:/output \
+    -B ${EXPERIMENTS_DIR}:/experiments,${DATA_DIR}:/data,${SCRIPT_DIR}:/script,${OUTPUT_DIR}:/output \
     ${CONTAINER_DIR}/${CONTAINER_FILENAME} \
     /experiments/${RUN_NAME}.sh
