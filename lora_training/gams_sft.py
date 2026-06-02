@@ -31,14 +31,31 @@ def use_lora(rank=128):
     return lora_config
 
 
+def remove_long_examples(tokenizer, max_length):
+    """
+    Removes examples from HF dataset, where prompt exceeds max_length.
+    """
+
+    def filter_fn(example):
+        prompt_tokens = tokenizer.apply_chat_template(example["prompt"], tokenize=True, add_generation_prompt=True)
+        return len(prompt_tokens) <= max_length
+
+    return filter_fn
+
+
 def run_training(experiment_dir, model_input_path, tokenizer_path, run_name, lora_rank, warmup_steps, learning_rate,
                  min_lr, resume_from_checkpoint=None):
     # Load the datasets from JSONL files
     train_dataset = load_dataset("json", data_files=f"/data/train.jsonl")["train"]
     val_dataset = load_dataset("json", data_files=f"/data/val.jsonl")["train"]
+    MAX_LENGTH = 16384
 
     # Load tokenizer (you'll need this for the data collator)
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+
+    # Filter examples that are too long
+    train_dataset = train_dataset.filter(remove_long_examples(tokenizer, MAX_LENGTH), num_proc=8)
+    val_dataset = val_dataset.filter(remove_long_examples(tokenizer, MAX_LENGTH), num_proc=8)
 
     # Per-device batch size, adjust based on your hardware
     micro_batch_size = 1
@@ -53,6 +70,8 @@ def run_training(experiment_dir, model_input_path, tokenizer_path, run_name, lor
 
     # Print only on rank 0
     if process_rank == 0:
+        print("Filtered train data size:", len(train_dataset))
+        print("Filtered val data size:", len(val_dataset))
         print("Micro batch size:", micro_batch_size)
         print("Effective batch size:", batch_size)
         print("Gradient accumulation steps:", gradient_accumulation_steps)
@@ -64,8 +83,8 @@ def run_training(experiment_dir, model_input_path, tokenizer_path, run_name, lor
 
     num_epochs = 3
     steps_per_epoch = len(train_dataset) // batch_size
-    eval_steps = int(1 / 4 * steps_per_epoch)  # Evaluate 3 times per epoch
-    save_steps = int(1 / 8 * steps_per_epoch)  # Save 3 times per epoch
+    eval_steps = int(1 / 4 * steps_per_epoch)  # Evaluate 4 times per epoch
+    save_steps = int(1 / 8 * steps_per_epoch)  # Save 8 times per epoch (saves are more frequent in case anything happens to training)
 
     if process_rank == 0:
         print("--------------------------------")
@@ -87,9 +106,11 @@ def run_training(experiment_dir, model_input_path, tokenizer_path, run_name, lor
         per_device_eval_batch_size=micro_batch_size,
         gradient_accumulation_steps=gradient_accumulation_steps,
         dataloader_num_workers=8,
-        max_length=32768,
+        max_length=MAX_LENGTH,
         completion_only_loss=True,
 
+        eval_on_start=True,
+        eval_accumulation_steps=1,
         eval_strategy="steps",
         save_strategy="steps",
         save_steps=save_steps,
@@ -97,7 +118,7 @@ def run_training(experiment_dir, model_input_path, tokenizer_path, run_name, lor
         save_total_limit=5,
         push_to_hub=False,
         metric_for_best_model="eval_loss",
-        load_best_model_at_end=True,
+        load_best_model_at_end=False,
         greater_is_better=False,
 
         logging_strategy="steps",
