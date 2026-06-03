@@ -11,8 +11,7 @@ import os
 def use_lora(rank=128):
     # Define LoRA configuration
     lora_config = LoraConfig(
-        # task_type=TaskType.CAUSAL_LM,   # Use appropriate task type, e.g., CAUSAL_LM, SEQ_2_SEQ_LM, etc.
-        r=rank,  # Rank of the LoRA updates (e.g. 128, 256, 512)
+        r=rank,  # Rank of the LoRA adapter (e.g. 128, 256, 512)
         lora_alpha=2 * rank,  # Scaling factor for LoRA updates (e.g. rank or 2x rank)
         lora_dropout=0.1,  # Optional dropout probability for LoRA layers
         target_modules=[
@@ -38,7 +37,7 @@ def remove_long_examples(tokenizer, max_length):
 
     def filter_fn(example):
         prompt_tokens = tokenizer.apply_chat_template(example["prompt"], tokenize=True, add_generation_prompt=True)
-        return len(prompt_tokens) <= max_length
+        return len(prompt_tokens) < max_length
 
     return filter_fn
 
