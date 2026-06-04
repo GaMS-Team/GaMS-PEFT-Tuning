@@ -5,13 +5,6 @@ from tqdm import trange
 from vllm import LLM, SamplingParams
 
 
-def generate_responses(prompts, model, sampling_params):
-    responses = model.chat(prompts, sampling_params, use_tqdm=False)
-    predictions = [response.outputs[0].text for response in responses]
-
-    return predictions
-
-
 def process_batch(batch, model, sampling_params):
     prompts = [example["prompt"] for example in batch]
     responses = model.chat(prompts, sampling_params, use_tqdm=False)
